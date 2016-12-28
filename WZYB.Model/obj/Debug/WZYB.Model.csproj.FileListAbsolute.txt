@@ -1,0 +1,4 @@
+D:\SimPlan\VS_cgk\VS_cgk\CGK\WZYB.Model\bin\Debug\WZYB.Model.dll
+D:\SimPlan\VS_cgk\VS_cgk\CGK\WZYB.Model\bin\Debug\WZYB.Model.pdb
+D:\SimPlan\VS_cgk\VS_cgk\CGK\WZYB.Model\obj\Debug\WZYB.Model.dll
+D:\SimPlan\VS_cgk\VS_cgk\CGK\WZYB.Model\obj\Debug\WZYB.Model.pdb

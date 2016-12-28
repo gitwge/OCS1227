@@ -1,0 +1,9 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE POSE6 :(* position and orientation as an euler based pose *)
+STRUCT
+	x, y, z, a, b, c : REAL;
+END_STRUCT
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

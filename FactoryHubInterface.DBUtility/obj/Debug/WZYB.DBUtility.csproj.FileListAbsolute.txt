@@ -1,0 +1,5 @@
+D:\SimPlan\VS_cgk\VS_cgk\CGK\FactoryHubInterface.DBUtility\bin\Debug\FactoryHubInterface.DBUtility.dll
+D:\SimPlan\VS_cgk\VS_cgk\CGK\FactoryHubInterface.DBUtility\bin\Debug\FactoryHubInterface.DBUtility.pdb
+D:\SimPlan\VS_cgk\VS_cgk\CGK\FactoryHubInterface.DBUtility\obj\Debug\FactoryHubInterface.DBUtility.dll
+D:\SimPlan\VS_cgk\VS_cgk\CGK\FactoryHubInterface.DBUtility\obj\Debug\FactoryHubInterface.DBUtility.pdb
+D:\SimPlan\VS_cgk\VS_cgk\CGK\FactoryHubInterface.DBUtility\obj\Debug\WZYB.DBUtility.csprojResolveAssemblyReference.cache

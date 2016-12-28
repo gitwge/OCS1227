@@ -1,0 +1,36 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE MNG_DatagramType :
+(
+	(*Dead man datagram signalizing peer is alive *)
+	MNG_DeadManDatagram := 0,
+	(*Time tick synchonisation *)
+	MNG_TimeTick,
+	(*Time tick synchonisation *)
+	MNG_TimeTickRequest,
+	(*Initialization of the connection *)
+	MNG_InitConnection,
+	(*Reset simulation *)
+	MNG_ResetSimulation,
+	(*Rewind simulation *)
+	MNG_RewindSimulation,
+	(*Start simulation *)
+	MNG_StartSimulation,
+	(*Stop simulation *)
+	MNG_StopSimulation,
+	(*IO Config datagram *)
+	MNG_IOConfig,
+	(*Complete Raw IO Image *)
+	MNG_RawIOImage,
+	(*Complete Raw 32 Bit IO Image *)
+	MNG_Raw32BitImage,
+	(*Delta IO, only ios that have changed *)
+	(* IODelta, *)
+	(*Text datagram *)
+	MNG_TextDatagram,
+	(*Unknown Datagram (future updates of peer, not supported by this side) *)
+	MNG_UnknownDatagram
+);
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

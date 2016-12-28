@@ -1,0 +1,6 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE MNG_DataArray : ARRAY[1..MNG_BUFFER_SIZE] OF DWORD; (* user data of max. length *)
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

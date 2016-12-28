@@ -1,0 +1,727 @@
+(*                                                                            *)
+(* File generated using the                                                   *)
+(*     Provider: machineering                                                 *)
+(*  Application: industrialPhysics                                            *)
+(* Architecture: Windows 64 Bit                                               *)
+(*      Version: 2.0.6111.master                                              *)
+(*        Build: eba55d6                                                      *)
+(* Beckhoff TwinCAT 2 control config generator                                *)
+(*                                                                            *)
+(* Date: 周三 12月 28 2016, Time: 15:18:19                                       *)
+(*                                                                            *)
+
+(* @NESTEDCOMMENTS := 'Yes'                                                   *)
+(* @PATH := '\/MNG_TCPIP'                                                     *)
+(* @SYMFILEFLAGS := '2048'                                                    *)
+FUNCTION_BLOCK MNG_UpdateIOs
+(* This function block implements simple TCP/IP client protocol.              *)
+(* The max. size of binary tx/rx data has to be <= PLCPRJ_BUFFER_SIZE         *)
+VAR_IN_OUT
+    Outputs : MNG_Application_Outputs_32Bit;    (* Tx user data *)
+END_VAR
+
+VAR_INPUT
+    bDbg        : BOOL                         := FALSE               ; (* TRUE => Enable debug output, FALSE => Disable debug output *)
+    sRemoteHost : STRING(15)                   := '127.0.0.1'         ; (* IP address of remote server *)	
+    nRemotePort : UDINT                        := 5000                ; (* Remote server port *)
+    bEnable     : BOOL                         := FALSE               ; (* TRUE => Enable/connect, FALSE => Disable/disconnect *)
+    tReconnect  : TIME                         := T#5s                ;
+END_VAR
+
+VAR_OUTPUT
+    errors      : FB_ProtErrorFifo                                    ; (* Error message fifo *)
+    Inputs      : MNG_Application_Inputs_32Bit                        ; (* Rx user data *)
+    eState      : E_SocketConnectionState      := eSOCKET_DISCONNECTED; (* TCP/IP connection state *)
+END_VAR
+
+VAR
+    counter          : DWORD                        := 0                   ;
+    fbConnect        : FB_ClientServerConnection    := (tReconnect := T#5s); (* Create/release TCP/IP connection *)
+    fbSend           : FB_SocketSend                                       ; (* Send TCP/IP data *)
+    fbReceive        : FB_SocketReceive                                    ; (* Receive TCP/IP data *)
+    state            : BYTE                                                ; (* Global state *)
+    tx_state         : BYTE                                                ; (* Tx state *)
+    rx_state         : BYTE                                                ; (* Rx state *)
+
+    toServer         : MNG_RawDatagram                                     ;
+    fromServer       : MNG_RawDatagram                                     ;
+    cbReceived       : UDINT                                               ; (* Count of received data bytes *)
+    cbRx             : UDINT                                               ; (* Rx frame byte size *)
+
+    bDisconnect      : BOOL                                                ; (* Disconnect flag, if set the socket will be closed *)
+    pollTimer        : TON                                                 ; (* Rx data poll timer *)
+    bAbort           : BOOL                                                ; (* Flag to abort frame parsing loop *)
+    sID              : STRING(20)                   := ''                  ;
+    clock            : FB_LocalSystemTime           := ( bEnable := TRUE ) ; (* OS clock *)
+    _byteCount       : DWORD                                               ;
+    _i               : DWORD                                               ;
+    _ptr             : POINTER TO BYTE                                     ;
+    _internalInputs  : MNG_Application_Inputs_32Bit                        ;
+    DWordBuffer      : DWORD                                               ; (* convert DWORD data *)
+    DIntBuffer       : DINT                                                ; (* convert DINT data *)
+END_VAR
+(* @END_DECLARATION := '0'                                                    *)
+
+(* refresh clock time                                                         *)
+clock();
+
+(* state chart                                                                *)
+CASE state OF
+    0:(* Init state *)
+        (*rx.A_Reset(bDbg := bDbg)  ; (* Reset RX fifo (optional) *)
+        tx.A_Reset    (bDbg := bDbg); (* Reset TX fifo (optional) *)*)
+        errors.A_Reset(bDbg := bDbg); (* Reset error fifo (optional) *)
+
+        pollTimer( IN := FALSE, PT := PLCPRJ_RECEIVER_POLLING_CYCLE_TIME );
+        bDisconnect := FALSE;(* Reset disconnect flag *)
+        cbReceived  := 0;(* Reset number of received data bytes *)
+        tx_state    := 0;(* Reset tx state machine *)
+        rx_state    := 0;(* Reset rx state machine *)
+        state       := 1;(* Go to the next step *)
+
+    1:(* Create TCP/IP connection *)
+        fbConnect(sSrvNetID := '',
+                  nMode := CONNECT_MODE_ENABLEDBG,(* Enable debug output *)
+                  sRemoteHost := sRemoteHost,
+                  nRemotePort := nRemotePort,
+                  tReconnect  := tReconnect,
+                  bEnable     := bEnable,
+                  eState      => eState);
+        IF NOT fbConnect.bBusy THEN
+
+            (* Create identification string used by debug messages *)
+            sID          := CONCAT(CONCAT('[', DWORD_TO_HEXSTR(fbConnect.hSocket.handle, 4, FALSE) ), ']');
+            errors.sDesc := CONCAT('CLI.Err', sID);
+
+            IF NOT fbConnect.bError THEN
+                IF eState = eSOCKET_CONNECTED THEN(* we are connected *)
+                    state := 2;
+                END_IF
+            ELSE(* connect error: log error *)
+                errors.A_AddTail(putError := fbConnect.nErrId);
+            END_IF
+        END_IF
+
+    2:(* Data exchange state *)
+        bDisconnect := NOT bEnable OR bDisconnect; (* user/internal disconnect requested? *)
+        IF bDisconnect AND (tx_state = 0) AND (rx_state = 0) THEN
+            state := 3;(* disconnect *)
+        ELSE
+            (*--------------------------- Send tx data -------------------------------------------*)
+            CASE tx_state OF
+                0:
+                    IF NOT bDisconnect THEN
+
+                        (* forcefully send data each cycle *)
+
+                        (* create the raw datagram *)
+                        _byteCount                   := 468;
+                        toServer.Header.ByteCount    := HOST_TO_BE32(in := _byteCount);
+                        toServer.Header.DatagramType := HOST_TO_BE32(in := MNG_Raw32BitImage);
+                        toServer.Header.Counter      := Counter;
+
+                        toServer.Payload[1] := HOST_TO_BE32(116); (* number of signals *)
+
+                        (* INT32 agvCar101_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.agvCar101_input_Path), n := 4);
+                        toServer.Payload[2] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 agvCar101_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.agvCar101_input_pos), n := 4);
+                        toServer.Payload[3] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 agvCar201_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.agvCar201_input_Path), n := 4);
+                        toServer.Payload[4] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 agvCar201_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.agvCar201_input_pos), n := 4);
+                        toServer.Payload[5] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 agvCar301_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.agvCar301_input_Path), n := 4);
+                        toServer.Payload[6] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 agvCar301_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.agvCar301_input_pos), n := 4);
+                        toServer.Payload[7] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar101_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar101_input_Path), n := 4);
+                        toServer.Payload[8] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar101_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar101_input_pos), n := 4);
+                        toServer.Payload[9] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar201_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar201_input_Path), n := 4);
+                        toServer.Payload[10] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar201_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar201_input_pos), n := 4);
+                        toServer.Payload[11] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar301_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar301_input_Path), n := 4);
+                        toServer.Payload[12] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar301_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar301_input_pos), n := 4);
+                        toServer.Payload[13] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar401_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar401_input_Path), n := 4);
+                        toServer.Payload[14] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar401_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar401_input_pos), n := 4);
+                        toServer.Payload[15] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar501_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar501_input_Path), n := 4);
+                        toServer.Payload[16] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar501_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar501_input_pos), n := 4);
+                        toServer.Payload[17] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar601_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar601_input_Path), n := 4);
+                        toServer.Payload[18] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar601_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar601_input_pos), n := 4);
+                        toServer.Payload[19] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar701_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar701_input_Path), n := 4);
+                        toServer.Payload[20] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar701_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar701_input_pos), n := 4);
+                        toServer.Payload[21] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar801_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar801_input_Path), n := 4);
+                        toServer.Payload[22] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar801_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar801_input_pos), n := 4);
+                        toServer.Payload[23] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar901_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar901_input_Path), n := 4);
+                        toServer.Payload[24] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar901_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar901_input_pos), n := 4);
+                        toServer.Payload[25] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1001_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1001_input_Path), n := 4);
+                        toServer.Payload[26] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1001_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1001_input_pos), n := 4);
+                        toServer.Payload[27] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1101_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1101_input_Path), n := 4);
+                        toServer.Payload[28] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1101_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1101_input_pos), n := 4);
+                        toServer.Payload[29] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1201_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1201_input_Path), n := 4);
+                        toServer.Payload[30] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1201_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1201_input_pos), n := 4);
+                        toServer.Payload[31] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1301_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1301_input_Path), n := 4);
+                        toServer.Payload[32] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1301_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1301_input_pos), n := 4);
+                        toServer.Payload[33] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1401_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1401_input_Path), n := 4);
+                        toServer.Payload[34] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1401_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1401_input_pos), n := 4);
+                        toServer.Payload[35] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1501_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1501_input_Path), n := 4);
+                        toServer.Payload[36] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1501_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1501_input_pos), n := 4);
+                        toServer.Payload[37] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1601_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1601_input_Path), n := 4);
+                        toServer.Payload[38] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1601_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1601_input_pos), n := 4);
+                        toServer.Payload[39] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1701_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1701_input_Path), n := 4);
+                        toServer.Payload[40] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1701_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1701_input_pos), n := 4);
+                        toServer.Payload[41] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1801_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1801_input_Path), n := 4);
+                        toServer.Payload[42] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1801_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1801_input_pos), n := 4);
+                        toServer.Payload[43] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar1901_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1901_input_Path), n := 4);
+                        toServer.Payload[44] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar1901_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar1901_input_pos), n := 4);
+                        toServer.Payload[45] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2001_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2001_input_Path), n := 4);
+                        toServer.Payload[46] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2001_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2001_input_pos), n := 4);
+                        toServer.Payload[47] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2101_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2101_input_Path), n := 4);
+                        toServer.Payload[48] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2101_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2101_input_pos), n := 4);
+                        toServer.Payload[49] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2201_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2201_input_Path), n := 4);
+                        toServer.Payload[50] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2201_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2201_input_pos), n := 4);
+                        toServer.Payload[51] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2301_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2301_input_Path), n := 4);
+                        toServer.Payload[52] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2301_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2301_input_pos), n := 4);
+                        toServer.Payload[53] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2401_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2401_input_Path), n := 4);
+                        toServer.Payload[54] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2401_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2401_input_pos), n := 4);
+                        toServer.Payload[55] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2501_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2501_input_Path), n := 4);
+                        toServer.Payload[56] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2501_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2501_input_pos), n := 4);
+                        toServer.Payload[57] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2601_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2601_input_Path), n := 4);
+                        toServer.Payload[58] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2601_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2601_input_pos), n := 4);
+                        toServer.Payload[59] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2701_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2701_input_Path), n := 4);
+                        toServer.Payload[60] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2701_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2701_input_pos), n := 4);
+                        toServer.Payload[61] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2801_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2801_input_Path), n := 4);
+                        toServer.Payload[62] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2801_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2801_input_pos), n := 4);
+                        toServer.Payload[63] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar2901_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2901_input_Path), n := 4);
+                        toServer.Payload[64] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar2901_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar2901_input_pos), n := 4);
+                        toServer.Payload[65] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3001_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3001_input_Path), n := 4);
+                        toServer.Payload[66] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3001_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3001_input_pos), n := 4);
+                        toServer.Payload[67] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3101_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3101_input_Path), n := 4);
+                        toServer.Payload[68] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3101_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3101_input_pos), n := 4);
+                        toServer.Payload[69] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3201_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3201_input_Path), n := 4);
+                        toServer.Payload[70] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3201_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3201_input_pos), n := 4);
+                        toServer.Payload[71] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3301_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3301_input_Path), n := 4);
+                        toServer.Payload[72] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3301_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3301_input_pos), n := 4);
+                        toServer.Payload[73] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3401_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3401_input_Path), n := 4);
+                        toServer.Payload[74] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3401_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3401_input_pos), n := 4);
+                        toServer.Payload[75] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3501_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3501_input_Path), n := 4);
+                        toServer.Payload[76] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3501_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3501_input_pos), n := 4);
+                        toServer.Payload[77] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3601_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3601_input_Path), n := 4);
+                        toServer.Payload[78] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3601_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3601_input_pos), n := 4);
+                        toServer.Payload[79] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3701_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3701_input_Path), n := 4);
+                        toServer.Payload[80] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3701_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3701_input_pos), n := 4);
+                        toServer.Payload[81] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3801_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3801_input_Path), n := 4);
+                        toServer.Payload[82] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3801_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3801_input_pos), n := 4);
+                        toServer.Payload[83] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar3901_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3901_input_Path), n := 4);
+                        toServer.Payload[84] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar3901_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar3901_input_pos), n := 4);
+                        toServer.Payload[85] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4001_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4001_input_Path), n := 4);
+                        toServer.Payload[86] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4001_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4001_input_pos), n := 4);
+                        toServer.Payload[87] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4101_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4101_input_Path), n := 4);
+                        toServer.Payload[88] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4101_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4101_input_pos), n := 4);
+                        toServer.Payload[89] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4201_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4201_input_Path), n := 4);
+                        toServer.Payload[90] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4201_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4201_input_pos), n := 4);
+                        toServer.Payload[91] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4301_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4301_input_Path), n := 4);
+                        toServer.Payload[92] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4301_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4301_input_pos), n := 4);
+                        toServer.Payload[93] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4401_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4401_input_Path), n := 4);
+                        toServer.Payload[94] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4401_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4401_input_pos), n := 4);
+                        toServer.Payload[95] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4501_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4501_input_Path), n := 4);
+                        toServer.Payload[96] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4501_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4501_input_pos), n := 4);
+                        toServer.Payload[97] := HOST_TO_BE32(DWordBuffer);
+
+                        (* INT32 ocsCar4601_input_Path *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4601_input_Path), n := 4);
+                        toServer.Payload[98] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 ocsCar4601_input_pos *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.ocsCar4601_input_pos), n := 4);
+                        toServer.Payload[99] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 CAR01_S_TGT *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.CAR01_S_TGT), n := 4);
+                        toServer.Payload[100] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 CAR01_S_CURRENT *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.CAR01_S_CURRENT), n := 4);
+                        toServer.Payload[101] := HOST_TO_BE32(DWordBuffer);
+
+                        (* UINT16 CAR01_S_STATE *)
+                        DWordBuffer := UINT_TO_DWORD(Outputs.CAR01_S_STATE);
+                        toServer.Payload[102] := HOST_TO_BE32(DWordBuffer);
+
+                        (* UINT16 CAR01_S_ERROR *)
+                        DWordBuffer := UINT_TO_DWORD(Outputs.CAR01_S_ERROR);
+                        toServer.Payload[103] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 CAR01_S_ACC *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.CAR01_S_ACC), n := 4);
+                        toServer.Payload[104] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 CAR01_S_DEC *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.CAR01_S_DEC), n := 4);
+                        toServer.Payload[105] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 CAR01_S_SPD *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.CAR01_S_SPD), n := 4);
+                        toServer.Payload[106] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 CAR01_WUCHA *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.CAR01_WUCHA), n := 4);
+                        toServer.Payload[107] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Fork01_S_ACC_FORK *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Fork01_S_ACC_FORK), n := 4);
+                        toServer.Payload[108] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Fork01_S_DEC_FORK *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Fork01_S_DEC_FORK), n := 4);
+                        toServer.Payload[109] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Fork01_S_SPD_FORK *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Fork01_S_SPD_FORK), n := 4);
+                        toServer.Payload[110] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Fork01_S_TGT_FORK *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Fork01_S_TGT_FORK), n := 4);
+                        toServer.Payload[111] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Platform01_S_ACC_FORM *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Platform01_S_ACC_FORM), n := 4);
+                        toServer.Payload[112] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Platform01_S_DEC_FORM *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Platform01_S_DEC_FORM), n := 4);
+                        toServer.Payload[113] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Platform01_S_SPD_FORM *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Platform01_S_SPD_FORM), n := 4);
+                        toServer.Payload[114] := HOST_TO_BE32(DWordBuffer);
+
+                        (* FLOAT32 Platform01_S_TGT_FORM *)
+                        MEMCPY(destAddr := ADR(DWordBuffer), srcAddr := ADR(Outputs.Platform01_S_TGT_FORM), n := 4);
+                        toServer.Payload[115] := HOST_TO_BE32(DWordBuffer);
+
+                        (* UINT16 Platform01_S_STATE_FORM *)
+                        DWordBuffer := UINT_TO_DWORD(Outputs.Platform01_S_STATE_FORM);
+                        toServer.Payload[116] := HOST_TO_BE32(DWordBuffer);
+
+                        (* UINT16 pallet01_PALET_STATE *)
+                        DWordBuffer := UINT_TO_DWORD(Outputs.pallet01_PALET_STATE);
+                        toServer.Payload[117] := HOST_TO_BE32(DWordBuffer);
+
+                        toServer.Header.SentTime := HOST_TO_BE32(in := clock.systemTime.wMilliseconds + clock.systemTime.wMinute * 60000);
+
+                        (* send frame *)
+                        fbSend(bExecute  := FALSE);
+                        fbSend(sSrvNetID := '',
+                               hSocket   := fbConnect.hSocket,
+                               cbLen     := SIZEOF(toServer.Header) + _byteCount,(* size of header + size of user data *)
+                               pSrc      := ADR(toServer),(* pointer to the frame data *)
+                               bExecute  := TRUE,
+                               tTimeout  := T#5s);
+
+                        tx_state := 1;
+                    END_IF
+                1:(* wait until send not busy *)
+                    fbSend( bExecute := FALSE );
+                    IF NOT fbSend.bBusy THEN
+                        tx_state := 0;
+                        IF NOT fbSend.bError THEN(* no error *)
+                            ;
+                        ELSE(* send error => log error and disconnect *)
+                            errors.A_AddTail( putError := fbSend.nErrId );
+                            bDisconnect := TRUE;(* set flag *)
+                        END_IF
+                    END_IF
+            END_CASE
+
+            (* ------------------------------------------- Get/fetch rx data ----------------------------------------------------------------- *)
+            CASE rx_state OF
+                0:
+                    IF NOT bDisconnect THEN
+                        pollTimer( IN := TRUE );
+                        IF pollTimer.Q THEN
+                            pollTimer( IN := FALSE );
+
+                            fbReceive( bExecute := FALSE );
+                            fbReceive( 	sSrvNetId	:= '',
+                            hSocket		:= fbConnect.hSocket,
+                            cbLen		:= SIZEOF(fromServer) - cbReceived,
+                            pDest		:= ADR(fromServer) + cbReceived,
+                            bExecute	:= TRUE,
+                            tTimeout	:= T#5s );
+                            rx_state := 1;
+                        END_IF
+                    END_IF
+                1:(* wait until receive not busy *)
+                    fbReceive( bExecute := FALSE );
+                    IF NOT fbReceive.bBusy THEN
+                        rx_state := 0;
+                        IF NOT fbReceive.bError THEN
+                            IF fbReceive.nRecBytes > 0 THEN (* some bytes received *)
+
+                                pollTimer( PT := T#0s );(* increase polling speed *)
+                                cbReceived := cbReceived + fbReceive.nRecBytes;
+
+                                (* parse received bytes *)
+                                REPEAT
+                                    bAbort := TRUE;(* set flag *)
+                                    IF cbReceived >= SIZEOF(fromServer.Header) THEN (* all header bytes received => check header data *)
+
+                                        (* correct header data *)
+                                        fromServer.Header.ByteCount    := BE32_TO_HOST(fromServer.Header.ByteCount);
+                                        Counter                        := fromServer.Header.Counter;
+                                        fromServer.Header.SentTime     := BE32_TO_HOST(fromServer.Header.SentTime);
+                                        fromServer.Header.DatagramType := BE32_TO_HOST(fromServer.Header.DatagramType);
+
+                                        IF (fromServer.Header.ByteCount <= SIZEOF( fromServer.Payload))(* check frame (user data) length *)
+                                        THEN
+
+                                            cbRx := SIZEOF(fromServer.Header) + fromServer.Header.ByteCount;(* calculate the (expected) length of the rx frame *)
+                                            IF cbReceived >= cbRx  THEN (* all frame bytes received? *)
+
+                                               (* currently only use the data on a 32 Bit raw image *)
+                                                IF fromServer.Header.DatagramType = MNG_Raw32BitImage THEN
+
+                                                    IF 20 = (fromServer.Header.ByteCount - 4) THEN
+
+                                                        (* FLOAT32 CAR01_AXIS *)
+                                                        DWordBuffer := BE32_TO_HOST(fromServer.Payload[2]);
+                                                        MEMCPY(destAddr := ADR(Inputs.CAR01_AXIS), srcAddr := ADR(DWordBuffer), n := 4);
+
+                                                        (* FLOAT32 CAR01_ACT_SPD *)
+                                                        DWordBuffer := BE32_TO_HOST(fromServer.Payload[3]);
+                                                        MEMCPY(destAddr := ADR(Inputs.CAR01_ACT_SPD), srcAddr := ADR(DWordBuffer), n := 4);
+
+                                                        (* BOOL CAR01_RCHD *)
+                                                        Inputs.CAR01_RCHD := fromServer.Payload[4]<>0;
+
+                                                        (* BOOL pallet01_ButtonPress *)
+                                                        Inputs.pallet01_ButtonPress := fromServer.Payload[5]<>0;
+
+                                                        (* BOOL rectangular_tube_101_ButtonPress *)
+                                                        Inputs.rectangular_tube_101_ButtonPress := fromServer.Payload[6]<>0;
+
+                                                    ELSE(* receive error: invalid frame format/data *)
+                                                        errors.A_AddTail( putError := PLCPRJ_ERROR_INVALID_IO_FORMAT_RECEIVED );
+                                                    END_IF
+
+                                                END_IF
+
+                                                MEMMOVE( ADR( fromServer ), ADR( fromServer ) + cbRx,  cbReceived - cbRx );(* shift the remaining rx bytes *)
+                                                cbReceived := cbReceived - cbRx;(* recalculate the size of the remaining rx bytes *)
+
+                                                bAbort := FALSE;(* reset flag, try to parse next frame *)
+
+                                                (* ELSE repeat reading *)
+                                            END_IF
+
+                                        ELSE(* receive error: invalid frame format/data *)
+                                            errors.A_AddTail( putError := PLCPRJ_ERROR_INVALID_FRAME_FORMAT );
+                                            bDisconnect := TRUE;(* set flag *)
+                                        END_IF
+                                        (* ELSE repeat reading *)
+                                    END_IF (* IF cbReceived >= SIZEOF(rxFrame.head) THEN *)
+
+                                UNTIL bAbort
+                                END_REPEAT
+
+                            ELSE(* fbReceive.nRecBytes = 0, repeat reading *)
+                                pollTimer( PT := PLCPRJ_RECEIVER_POLLING_CYCLE_TIME );(* slow down the polling cycle *)
+                            END_IF(* IF fbReceive.nRecBytes > 0 THEN *)
+                        ELSE(* receive error => log error and disconnect *)
+                            errors.A_AddTail( putError := fbReceive.nErrId );
+                            bDisconnect := TRUE;(* set flag *)
+                        END_IF
+
+                    END_IF(*IF NOT fbReceive.bBusy THEN*)
+
+            END_CASE
+
+        END_IF
+
+    3:(* disconnect *)
+        fbConnect( bEnable:= FALSE, eState=>eState );
+        IF eState = eSOCKET_DISCONNECTED THEN
+            state := 0;
+        END_IF
+
+END_CASE
+END_FUNCTION_

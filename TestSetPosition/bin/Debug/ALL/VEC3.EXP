@@ -1,0 +1,9 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE VEC3 :(* 3d position *)
+STRUCT
+	x, y, z : REAL;
+END_STRUCT
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

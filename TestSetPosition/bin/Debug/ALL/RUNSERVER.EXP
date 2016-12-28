@@ -1,0 +1,8 @@
+MACRO
+MacroName: 'RunServer'
+MacroMenu: 'RunServer'
+MacroCmd: 'system C:\TwinCAT\TCPLib\SocketServer\Project1.exe'
+MacroCmd: ''
+END_MACRO
+
+

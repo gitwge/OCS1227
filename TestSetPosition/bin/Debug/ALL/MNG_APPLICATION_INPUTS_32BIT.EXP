@@ -1,0 +1,29 @@
+(*                                                                            *)
+(* File generated using the                                                   *)
+(*     Provider: machineering                                                 *)
+(*  Application: industrialPhysics                                            *)
+(* Architecture: Windows 64 Bit                                               *)
+(*      Version: 2.0.6111.master                                              *)
+(*        Build: eba55d6                                                      *)
+(* Beckhoff TwinCAT 2 control config generator                                *)
+(*                                                                            *)
+(* Date: 周三 12月 28 2016, Time: 15:18:19                                       *)
+(*                                                                            *)
+
+(* @NESTEDCOMMENTS := 'Yes'                                                   *)
+(* @PATH := '\/MNG_TCPIP'                                                     *)
+(*                                                                            *)
+
+TYPE MNG_APPLICATION_INPUTS_32BIT :
+STRUCT
+    NumSignals                    : INT     := 5         ;
+    CAR01_AXIS                    : REAL    := 0.0; (* Physics://physics/PCC/ALL/CAR?KinAxis *)
+    CAR01_ACT_SPD                 : REAL    := 0.0; (* Physics://physics/PCC/ALL/CAR?KinSpeed *)
+    CAR01_RCHD                    : BOOL    := 0; (* Physics://physics/PCC/ALL/CAR?KinReached *)
+    pallet01_ButtonPress          : BOOL    := 0; (* /CAR/Platform/Fork/fork01/fork02/pallet?ButtonPress *)
+    rectangular_tube_101_ButtonPre: BOOL    := 0; (* ics/PCC/ALL/CAR/Body/rectangular tube 1?ButtonPress *)
+END_STRUCT
+END_TYPE
+
+
+(* @END_DECLARATION := '0'                                                 
