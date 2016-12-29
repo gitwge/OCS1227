@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<DATA>
+
+
+  <!--type   1 uint,2 float,3 flag-->
+  <mechan name="PCC">
+    <parts name="car">
+      <meta name="CAR01_S_ACC" key="acc" value="0.3"  datatype="2" rORw="2" />
+      <meta name="CAR01_S_DEC" key="dec" value="0.3"  datatype="2" rORw="2"/>
+      <meta name="CAR01_S_SPD" key="spd" value="1.95"  datatype="2" rORw="2"/>
+      <meta name="CAR01_WUCHA" key="wucha" value="4"  datatype="2" rORw="2"/>
+
+      <meta name="CAR01_RCHD" key="nowrchd" value=""  datatype="3" rORw="1"/>
+      <meta name="CAR01_ACT_SPD" key="nowspd" value=""  datatype="2" rORw="1"/>
+      <meta name="CAR01_AXIS" key="nowaxis" value=""  datatype="2" rORw="1"/>
+    </parts>
+    <parts name="platform">
+      <meta name="Platform01_S_ACC_FORM" key="acc" value="0.5"  datatype="2" rORw="2"/>
+      <meta name="Platform01_S_DEC_FORM" key="dec" value="0.5"  datatype="2" rORw="2"/>
+      <meta name="Platform01_S_SPD_FORM" key="spd" value="0.5"  datatype="2" rORw="2"/>
+      <meta name="Platform01_S_TGT_FORM" key="tgt" value="0.2"  datatype="2" rORw="2"/>
+     </parts>
+    <parts name="fork">
+      <meta name="Fork01_S_ACC_FORK" key="acc" value="0.5"  datatype="2" rORw="2"/>
+      <meta name="Fork01_S_DEC_FORK" key="dec" value="0.5"  datatype="2" rORw="2" />
+      <meta name="Fork01_S_SPD_FORK" key="spd" value="0.5"  datatype="2" rORw="2"/>
+      <meta name="Fork01_S_TGT_FORK" key="tgt_1" value="0.73"  datatype="2" rORw="2"/>
+    </parts>
+    <parts name="btn" >
+      <meta name="rectangular_tube_101_ButtonPress" key="btn_car" value=""  datatype="2" rORw="1"/>
+      <meta name="pallet01_ButtonPress" key="btn_pallet" value=""  datatype="2" rORw="1"/>
+    </parts>
+    <config name="Debugdata">
+      <meta name="pos_1" value="1.8" datatype="2" />
+      <meta name="pos_58" value="78.7" datatype="2" />
+      <meta name="point_1" value="25231" datatype="2" />
+      <meta name="point_58" value="7708439" datatype="2" />
+      <meta name="totalNum" value="58" datatype="2" />
+    </config>
+    <data name="Timelydata">
+      <meta sort="1"  value=""  name="CAR01_S_TGT" key="car_tgt" des=""  datatype="2"  />
+      <meta sort="2"  value=""  name="CAR01_S_CURRENT" key="car_current" des=""  datatype="2" />
+      <meta sort="3"  value=""  name="CAR01_S_STATE" key="car_state" des=""  datatype="1" />
+      <meta sort="4"  value=""  name="Fork01_S_ERROR_FORK111" key="error" des=""  datatype="1" />
+      <meta sort="5"  value=""  name="pallet01_PALET_STATE" key="PALET_state" des=""  datatype="1" />
+      <meta sort="6"  value=""  name="Platform01_S_STATE_FORM" key="FORK_state" des=""  datatype="1" />
+    </data>
+    
+  </mechan>
+  
+  
+</DATA>

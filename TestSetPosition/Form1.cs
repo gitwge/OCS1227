@@ -335,8 +335,8 @@ namespace TestSetPosition
             ocsTempLine = new int[ocsCarCount + 1];
 
             int[] ocsTmpSequence = new int[1000];
-
-            for (int i = 1; i <= ocsCarCount; i++)
+            for (int i = 1; i <= 5; i++)
+            //for (int i = 1; i <= ocsCarCount; i++)
             {
                 ocsTempLine[i] = 0;
                 OCSStatus model = OCSStatusBLL.GetModel(i);
@@ -408,6 +408,7 @@ namespace TestSetPosition
         /// <param name="e"></param>
         private void timer2_Tick(object sender, EventArgs e)
         {
+           
             //ocs数据模拟
             for (int i = 1; i < ocsCarPos.Length; i++)
             {
@@ -537,7 +538,8 @@ namespace TestSetPosition
             timer3.Enabled = true;
 
             //启动悬挂小车线程
-            for (int i = 0; i < ocsCarCount; i++)
+            for (int i = 0; i < 5; i++)
+            //for (int i = 0; i < ocsCarCount; i++)
             {
                 ocsThread[i] = new Thread(new ParameterizedThreadStart(OCSThreadFunc));
                 ocsThread[i].Start(i + 1);
@@ -549,6 +551,11 @@ namespace TestSetPosition
                 agvThread[i] = new Thread(new ParameterizedThreadStart(AGVThreadFunc));
                 agvThread[i].Start(i + 1);
             }
+
+            //PCC-----
+            setBaseData();
+            timer4.Enabled = true;
+            timer5.Enabled = true;
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -562,6 +569,11 @@ namespace TestSetPosition
             {
                 ocsThread[i].Abort();
             }
+
+            timer2.Enabled = false;
+            timer3.Enabled = false;
+            timer4.Enabled = false;
+            timer5.Enabled = false;
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -738,6 +750,57 @@ namespace TestSetPosition
                 Thread.Sleep(ocsThreadTime);
             }
         }
+
+        #endregion
+
+
+        #region 配餐车逻辑
+        //-------------------------------------------------------------------------------
+        //从新设置基础数据
+        DBtest dd = new DBtest();
+        public ControlPcc pcccontrol2 = new ControlPcc();
+        public void setBaseData()
+        {
+            dd = new DBtest();
+            this.timer5.Interval = int.Parse(System.Configuration.ConfigurationManager.AppSettings["car_interval"].ToString());
+
+            pcccontrol2.setBaseData(this.handle);
+        }
+
+        //设置模型数据
+        public void setModelData()
+        {
+            try
+            {
+                if (pcccontrol2.flag == false)
+                {
+                    return;
+                }
+                if (pcccontrol2.flag == true)
+                {
+                    pcccontrol2.flag = false;
+                }
+                pcccontrol2.setModelData(this.handle);
+                pcccontrol2.flag = true;
+            }
+            catch (Exception ex)
+            {
+                return;
+            }
+        }
+
+        private void timer4_Tick(object sender, EventArgs e)
+        {
+            //PCC模拟数据
+            dd.testdata2();
+        }
+
+        private void timer5_Tick(object sender, EventArgs e)
+        {
+            //PCC刷新数据
+            setModelData();
+        }
+
 
         #endregion
 

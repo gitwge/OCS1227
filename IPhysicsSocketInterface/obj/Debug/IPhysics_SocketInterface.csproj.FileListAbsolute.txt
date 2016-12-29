@@ -56,3 +56,10 @@ D:\SimPlan\VS_cgk\VS_cgk\CGK\IPhysicsSocketInterface\obj\Debug\IPhysics_SocketIn
 D:\SimPlan\VS_cgk\VS_cgk\CGK\IPhysicsSocketInterface\obj\Debug\IPhysicsSocketInterface.dll
 D:\SimPlan\VS_cgk\VS_cgk\CGK\IPhysicsSocketInterface\obj\Debug\IPhysicsSocketInterface.pdb
 D:\SimPlan\VS_cgk\VS_cgk\CGK\IPhysicsSocketInterface\obj\Debug\IPhysics_SocketInterface.csprojResolveAssemblyReference.cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\bin\Debug\IPhysicsSocketInterface.dll
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\bin\Debug\IPhysicsSocketInterface.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\obj\Debug\IPhysics_SocketInterface.csprojResolveAssemblyReference.cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\obj\Debug\IPhysics.ExternalAppDock.resources
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\obj\Debug\IPhysics_SocketInterface.csproj.GenerateResource.Cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\obj\Debug\IPhysicsSocketInterface.dll
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysicsSocketInterface\obj\Debug\IPhysicsSocketInterface.pdb
