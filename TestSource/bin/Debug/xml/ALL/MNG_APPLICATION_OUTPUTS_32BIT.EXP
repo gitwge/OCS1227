@@ -1,0 +1,26 @@
+(*                                                                            *)
+(* File generated using the                                                   *)
+(*     Provider: machineering                                                 *)
+(*  Application: industrialPhysics                                            *)
+(* Architecture: Windows 64 Bit                                               *)
+(*      Version: 2.0.6111.master                                              *)
+(*        Build: eba55d6                                                      *)
+(* Beckhoff TwinCAT 2 control config generator                                *)
+(*                                                                            *)
+(* Date: 周三 1月 4 2017, Time: 18:04:18                                         *)
+(*                                                                            *)
+
+(* @NESTEDCOMMENTS := 'Yes'                                                   *)
+(* @PATH := '\/MNG_TCPIP'                                                     *)
+(*                                                                            *)
+
+TYPE MNG_APPLICATION_OUTPUTS_32BIT :
+STRUCT
+    NumSignals                    : INT     := 2         ;
+    Source01_IN_ISSHOW            : UINT    := 0; (* ics://physics/CGK/InitializePallet/Source?IN_ISSHOW *)
+    Source01_IN_LOCATION          : UINT    := 0; (* s://physics/CGK/InitializePallet/Source?IN_LOCATION *)
+END_STRUCT
+END_TYPE
+
+
+(* @END_DECLARATION := '0'                                                 

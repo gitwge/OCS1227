@@ -7,3 +7,4 @@ D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\FactoryHubInterface.DBUtility\bin\Debu
 D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\FactoryHubInterface.DBUtility\bin\Debug\FactoryHubInterface.DBUtility.pdb
 D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\FactoryHubInterface.DBUtility\obj\Debug\FactoryHubInterface.DBUtility.dll
 D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\FactoryHubInterface.DBUtility\obj\Debug\FactoryHubInterface.DBUtility.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\FactoryHubInterface.DBUtility\obj\Debug\WZYB.DBUtility.csprojResolveAssemblyReference.cache

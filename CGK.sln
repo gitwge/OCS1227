@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WZYB.Model", "WZYB.Model\WZ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WZYB.DBUtility", "FactoryHubInterface.DBUtility\WZYB.DBUtility.csproj", "{7E139430-6B5A-4BF9-A7A1-B3E672654FFE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSource", "TestSource\TestSource.csproj", "{8E490374-66CA-40B2-AF81-DD9B1E650C8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{7E139430-6B5A-4BF9-A7A1-B3E672654FFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7E139430-6B5A-4BF9-A7A1-B3E672654FFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7E139430-6B5A-4BF9-A7A1-B3E672654FFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E490374-66CA-40B2-AF81-DD9B1E650C8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E490374-66CA-40B2-AF81-DD9B1E650C8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E490374-66CA-40B2-AF81-DD9B1E650C8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E490374-66CA-40B2-AF81-DD9B1E650C8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,24 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP\/Helper functions/function blocks' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION F_ADSLOGERROR : DINT
+(* This function logs communication error messages to the TwinCAT System Log View *)
+VAR_INPUT
+	sPrefix		: STRING(20);(* Debug message prefix string (allows the identification of log message source) *)
+	nErrID		: DWORD; (* Error code *)
+END_VAR
+
+(* @END_DECLARATION := '0' *)
+IF nErrId = 0 THEN
+	F_ADSLOGERROR := ADSLOGSTR( ADSLOG_MSGTYPE_HINT OR ADSLOG_MSGTYPE_LOG, CONCAT( sPrefix, ' No error!   %s'),'' );
+ELSIF (  nErrId AND DWORD#16#80000000 ) = 16#80000000 THEN
+	F_ADSLOGERROR := ADSLOGDINT( ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_LOG, CONCAT( sPrefix, ' Win32 error: %d' ), SCODE_CODE( nErrId ) );
+ELSIF (nErrId AND 16#00008100) =16#00008100 THEN
+	F_ADSLOGERROR := ADSLOGDINT( ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_LOG, CONCAT( sPrefix, ' Internal PLC sample project (user) error: %d' ), nErrId );
+ELSIF (nErrId AND 16#00008000) =16#00008000 THEN
+	F_ADSLOGERROR := ADSLOGDINT( ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_LOG, CONCAT( sPrefix, ' Internal TCP/IP Connection Server error: %d' ), nErrId );
+ELSE
+	F_ADSLOGERROR := ADSLOGDINT( ADSLOG_MSGTYPE_ERROR OR ADSLOG_MSGTYPE_LOG, CONCAT( sPrefix, ' TwinCAT System error: %d' ), nErrId );
+END_IF
+END_FUNCTION

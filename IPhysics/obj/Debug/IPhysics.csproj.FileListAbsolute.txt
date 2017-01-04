@@ -12,3 +12,4 @@ D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysics\bin\Debug\IPhysics.dll
 D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysics\bin\Debug\IPhysics.pdb
 D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysics\obj\Debug\IPhysics.dll
 D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysics\obj\Debug\IPhysics.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\IPhysics\obj\Debug\IPhysics.csprojResolveAssemblyReference.cache

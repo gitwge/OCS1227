@@ -1,0 +1,44 @@
+(* @NESTEDCOMMENTS := 'Yes'                                                  *)
+(* @GLOBAL_VARIABLE_LIST := 'MNG_GLOBALS'                                    *)
+(* @PATH := ''                                                               *)
+(* @SYMFILEFLAGS := '2048'                                                   *)
+
+VAR_GLOBAL CONSTANT
+	PLCPRJ_MAX_CONNECTIONS					: UDINT 	:= 5;   (* Max. number of server<->client connections *)
+	PLCPRJ_SERVER_RESPONSE_TIMEOUT			: TIME 	:= T#10s;
+	PLCPRJ_CLIENT_SEND_CYCLE_TIME			: TIME 	:= T#1ms;
+
+	PLCPRJ_RECEIVER_POLLING_CYCLE_TIME		: TIME 	:= T#1ms;
+	PLCPRJ_BUFFER_SIZE						: UDINT	:= 10000;   (* Max. internal fifo/receiver buffer size *)
+
+	(* Some project specific error codes *)
+	PLCPRJ_ERROR_RECEIVE_BUFFER_OVERFLOW	: UDINT := 16#8101; (* receive fifo/buffer overflow*)
+	PLCPRJ_ERROR_SEND_BUFFER_OVERFLOW		: UDINT := 16#8102;	(* send fifo/buffer overflow *)
+	PLCPRJ_ERROR_RESPONSE_TIMEOUT			: UDINT := 16#8103;	(* receive timeout error *)
+	PLCPRJ_ERROR_INVALID_FRAME_FORMAT		: UDINT := 16#8104;	(* invalid frame format/data *)
+	PLCPRJ_ERROR_INVALID_IO_FORMAT_RECEIVED : UDINT := 16#8105;	(* invalid io format/data *)
+	PLCPRJ_ERROR_INTERNAL					: UDINT := 16#8105; (* internal error *)
+	PLCPRJ_ERROR_RX_DATA_INCONSISTENT		: UDINT := 16#8106; (* rx data inconsistent *)
+
+        MNG_BUFFER_SIZE						: DWORD := 32768;   (* Bytes: 131072; Max 128 KB of datagram payload data*)
+	MNG_DatagramsFIFO_Size					: DWORD := 10;      (* Max 10 datagrams buffered before loss occurs *)
+	MNG_EmptyDatagramHeader					: MNG_DatagramHeader;
+	MNG_Application_NumInputs				: DWORD := 4;
+	MNG_Application_NumOutputs				: DWORD := 4;
+
+        (* PI should be defined by the system *)
+        (* PI      : LREAL := 3.1415926535897932384626433832795; *)
+        DEG2RAD : LREAL := 0.017453292519943295769236907684886;
+        RAD2DEG : LREAL := 57.295779513082320876798154814105;
+END_VAR
+
+VAR_GLOBAL
+        MNG_TIMESTAMP                                           : LREAL := 0;
+END_VAR
+(* @OBJECT_END := 'MNG_GLOBALS' *)
+(* @CONNECTIONS := MNG_GLOBALS
+FILENAME : ''
+FILETIME : 0
+EXPORT : 0
+NUMOFCONNECTIONS : 0
+*)

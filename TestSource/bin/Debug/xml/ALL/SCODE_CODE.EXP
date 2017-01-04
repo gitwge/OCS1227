@@ -1,0 +1,15 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP\/Helper functions/function blocks' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION SCODE_CODE : DWORD
+(* Helper function: returns the lower word of error code *)
+VAR_INPUT
+	sc		: UDINT;
+END_VAR
+
+
+
+(* @END_DECLARATION := '0' *)
+SCODE_CODE := 16#FFFF AND UDINT_TO_DWORD( sc );
+END_FUNCTION

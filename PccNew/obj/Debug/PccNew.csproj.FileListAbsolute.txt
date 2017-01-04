@@ -20,3 +20,14 @@ D:\SimPlan\VS_cgk\VS_cgk\CGK\PccNew\obj\Debug\PccNew.Properties.Resources.resour
 D:\SimPlan\VS_cgk\VS_cgk\CGK\PccNew\obj\Debug\PccNew.csproj.GenerateResource.Cache
 D:\SimPlan\VS_cgk\VS_cgk\CGK\PccNew\obj\Debug\PccNew.exe
 D:\SimPlan\VS_cgk\VS_cgk\CGK\PccNew\obj\Debug\PccNew.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\bin\Debug\PccNew.exe.config
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\bin\Debug\PccNew.exe
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\bin\Debug\PccNew.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\bin\Debug\IPhysicsSocketInterface.dll
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\bin\Debug\IPhysicsSocketInterface.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\obj\Debug\PccNew.csprojResolveAssemblyReference.cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\obj\Debug\PccNew.PCC.resources
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\obj\Debug\PccNew.Properties.Resources.resources
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\obj\Debug\PccNew.csproj.GenerateResource.Cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\obj\Debug\PccNew.exe
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\PccNew\obj\Debug\PccNew.pdb

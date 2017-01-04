@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeGen>
+	<Header date="周三 1月 4 2017" time="18:04:18" organization="machineering" application="industrialPhysics" build="eba55d6" version="2.0.6111.master" architecture="Windows 64 Bit"/>
+	<Manufacturer name="Beckhoff TwinCAT 2"/>
+	<Interface type="ComTCP" name="ALL">
+		<Server host="127.0.0.1" hostHex="7f000001" port="6000" portHex="1770" interval="10" protocol="TCP" packedMode="0" hostIP1="127" hostIP2="0" hostIP3="0" hostIP4="1"/>
+		<Inputs Count="0" SizeInBytes="0" SizeInBytes_S7="0" SizeInBytes_Codesys="0" SizeInBytes_PackedMessage="20"/>
+		<Outputs Count="2" SizeInBytes="4" SizeInBytes_S7="8" SizeInBytes_Codesys="8" SizeInBytes_PackedMessage="24">
+			<Connection Name="Source01_IN_ISSHOW" From="Physics://physics/CGK/InitializePallet/Source?IN_ISSHOW" Type="UINT16" S7Type="WORD" CodesysType="UINT" ByteIndex="0" ByteIndex_S7="0" ByteIndex_Codesys="0" PackedByteIndex="20" PackedBitIndex="0" HardwareAddress="AW0"/>
+			<Connection Name="Source01_IN_LOCATION" From="Physics://physics/CGK/InitializePallet/Source?IN_LOCATION" Type="UINT16" S7Type="WORD" CodesysType="UINT" ByteIndex="2" ByteIndex_S7="4" ByteIndex_Codesys="4" PackedByteIndex="22" PackedBitIndex="0" HardwareAddress="AW2"/>
+		</Outputs>
+	</Interface>
+	<Functions/>
+	<Tasks>
+		<Task Name="PLC" CycleTime="10" Priority="0"/>
+	</Tasks>
+	<Mechatronics>
+		<Entity>
+			<ItemPath><![CDATA[Physics://physics/CGK/InitializePallet/Source]]></ItemPath>
+			<SymbolName><![CDATA[Source01_IN_ISSHOW]]></SymbolName>
+			<VarPath><![CDATA[Physics://physics/CGK/InitializePallet/Source?IN_ISSHOW]]></VarPath>
+			<ComponentName><![CDATA[Source]]></ComponentName>
+			<Access><![CDATA[WRITE]]></Access>
+			<VarComment><![CDATA[(Source) (ModelScript) - IN_ISSHOW]]></VarComment>
+			<Function><![CDATA[ModelScript]]></Function>
+			<VarName><![CDATA[IN_ISSHOW]]></VarName>
+			<Type><![CDATA[UINT16]]></Type>
+			<Direction><![CDATA[WRITE]]></Direction>
+		</Entity>
+		<Entity>
+			<ItemPath><![CDATA[Physics://physics/CGK/InitializePallet/Source]]></ItemPath>
+			<SymbolName><![CDATA[Source01_IN_LOCATION]]></SymbolName>
+			<VarPath><![CDATA[Physics://physics/CGK/InitializePallet/Source?IN_LOCATION]]></VarPath>
+			<ComponentName><![CDATA[Source]]></ComponentName>
+			<Access><![CDATA[WRITE]]></Access>
+			<VarComment><![CDATA[(Source) (ModelScript) - IN_LOCATION]]></VarComment>
+			<Function><![CDATA[ModelScript]]></Function>
+			<VarName><![CDATA[IN_LOCATION]]></VarName>
+			<Type><![CDATA[UINT16]]></Type>
+			<Direction><![CDATA[WRITE]]></Direction>
+		</Entity>
+	</Mechatronics>
+</CodeGen>

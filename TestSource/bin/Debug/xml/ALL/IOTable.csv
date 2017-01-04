@@ -1,0 +1,3 @@
+SymbolName;Type;Direction;ComponentName;Function;DriveType;VarName
+Source01_IN_ISSHOW;UINT16;WRITE;Source;ModelScript;;IN_ISSHOW
+Source01_IN_LOCATION;UINT16;WRITE;Source;ModelScript;;IN_LOCATION

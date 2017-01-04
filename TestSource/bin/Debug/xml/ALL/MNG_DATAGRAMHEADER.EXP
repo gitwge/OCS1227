@@ -1,0 +1,16 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE MNG_DatagramHeader :(* datagram header (4 byte aligned) *)
+STRUCT
+	(* Time when datagram has been created *)
+	Counter 	: DWORD;
+	(* Time when datagram has been sent *)
+	SentTime 		: DWORD;
+	(* Type of the datagram *)
+	DatagramType 	: DWORD := MNG_UnknownDatagram;
+	(* Byte count in the payload *)
+	ByteCount 		: DWORD := 0;
+END_STRUCT
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

@@ -1,0 +1,45 @@
+(*                                                                            *)
+(* File generated using the                                                   *)
+(*     Provider: machineering                                                 *)
+(*  Application: industrialPhysics                                            *)
+(* Architecture: Windows 64 Bit                                               *)
+(*      Version: 2.0.6111.master                                              *)
+(*        Build: eba55d6                                                      *)
+(* Beckhoff TwinCAT 2 control config generator                                *)
+(*                                                                            *)
+(* Date: 周三 1月 4 2017, Time: 18:04:18                                         *)
+(*                                                                            *)
+
+(* @NESTEDCOMMENTS := 'Yes'                                                   *)
+(* @PATH := '\/MNG_TCPIP'                                                     *)
+(* @SYMFILEFLAGS := '2048'                                                    *)
+
+FUNCTION_BLOCK MNG_Simulation
+VAR_INPUT
+    bEnable    : BOOL                          := FALSE;
+    outputs    : MNG_Application_Outputs_32Bit         ;
+END_VAR
+VAR_OUTPUT
+    inputs     : MNG_Application_Inputs_32Bit          ;
+END_VAR
+VAR
+    ioUpdater  : MNG_UpdateIOs                 := (sRemoteHost := '127.0.0.1', nRemotePort := 6000);
+    fbCloseAll : FB_SocketCloseAll;
+    bCloseAll  : BOOL := TRUE;
+END_VAR
+(* @END_DECLARATION := '0'                                                    *)
+IF bCloseAll THEN (*On PLC reset or program download close all old (opened) connections *)
+    bCloseAll := FALSE;
+    fbCloseAll( bExecute:= TRUE );
+ELSE
+    fbCloseAll( bExecute:= FALSE );
+END_IF
+
+IF NOT fbCloseAll.bBusy THEN
+
+    (* ------------------------------------- trigger data exchange ----------------------------------------------------------------------------*)
+    ioUpdater(Outputs := outputs, Inputs => inputs, bEnable := bEnable);
+
+END_IF
+
+END_FUNCTION_

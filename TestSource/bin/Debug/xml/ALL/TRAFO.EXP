@@ -1,0 +1,16 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE TRAFO :(* position and orientation as a 4x4 matrix *)
+STRUCT
+	baseX : VEC3; 
+	fill0 : REAL;
+	baseY : VEC3; 
+	fill1 : REAL;
+	baseZ : VEC3; 
+	fill2 : REAL;
+	origin : VEC3;
+	fill3 : REAL;
+END_STRUCT
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

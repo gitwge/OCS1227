@@ -1,0 +1,48 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP\/Helper functions/function blocks' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK FB_ProtErrorFifo
+(* Protocol error fifo control function block *)
+VAR_INPUT
+	sDesc		: STRING(20)	:= 'Unknown';(* Debug message description string (allows the identification of message source) *)
+	bDbg		: BOOL 		:= FALSE; (* TRUE => Enable debug output, FALSE => Disable *)
+	putError		: UDINT 		:= 0; (* Error code to add (write) to the fifo *)
+END_VAR
+VAR_OUTPUT
+	bOk			: BOOL; 	 	(* TRUE = New entry added or removed succesfully, FALSE = Fifo overflow or fifo empty *)
+	getError		: UDINT		:= 0; (* Error code get/removed (read) from fifo *)
+	nCount		: UDINT		:= 0;	(* Number of fifo entries *)
+END_VAR
+VAR
+	buffer	: ARRAY[-3..10] OF UDINT;(* Internal buffer memory *)
+	fbBuffer 	: FB_MemRingBuffer;(* Basic (lower level) buffer control function block *)
+END_VAR
+(* @END_DECLARATION := '0' *)
+;
+END_FUNCTION_BLOCK
+ACTION	A_AddTail:
+(* adds new fifo entry *)
+fbBuffer.A_AddTail( 	pWrite:= ADR( putError ), cbWrite := SIZEOF( putError ),
+					pBuffer:= ADR(buffer), cbBuffer:= SIZEOF(buffer),
+					bOk=>bOk, nCount=>nCount );
+IF bOk THEN
+	IF bDbg THEN(* log message *)
+		F_ADSLOGERROR( CONCAT( sDesc, '<=' ), putError );
+	END_IF
+END_IF
+END_ACTION
+
+ACTION	A_RemoveHead:
+(* removes oldest fifo entry *)
+fbBuffer.A_RemoveHead( 	pRead := ADR(getError), cbRead := SIZEOF(getError),
+						pBuffer:= ADR(buffer), cbBuffer:= SIZEOF(buffer),
+						bOk=>bOk, nCount=>nCount );
+END_ACTION
+
+ACTION	A_Reset:
+(* resets fifo = clears all data *)
+fbBuffer.A_Reset( pBuffer:= ADR(buffer), cbBuffer:= SIZEOF(buffer),
+				bOk=>bOk, nCount=>nCount );
+END_ACTION
+

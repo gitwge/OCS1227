@@ -1,0 +1,104 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>industrialPhysics simulation report</title>
+<style type="text/css">
+				body { font-family: arial; }
+				table { border-collapse:collapse; }
+
+			
+				div#logo img { float:right; }
+                div#headline { float:left; margin:0 0 40 0; }
+                div#options { clear:both; }
+				div#table { clear:both; }
+				div#frame { width:900px; }
+				div#path { font-size:x-small; color:gray; }
+				
+				th { text-align:left; padding:2 20 2 0; border-bottom:2px solid black; }
+				td { font-size:medium; vertical-align:top; padding:2 20 2 0; }
+				td.right { text-align:right; }
+				td.center { text-align:center; }
+				tr#sep { border-top:1px solid black; }
+				
+				td#int { border-top:1px dotted gray; border-bottom-style:none; }
+				
+
+				tr#subLine td { padding-top:0px; }
+				tr#subLine td a { font-size:x-small; color:gray; }
+				
+				tr:hover { background-color:darkseagreen; }
+				
+				
+                ul#header { font-size:x-small; padding:0; margin:0 0 0 0; }
+				ul#header li { display:inline; margin-left:5; margin-right:5; }
+				
+				h1,h2 { color:gray;  }
+				h1 { margin-bottom:0; padding:0; }
+				h3 { text-decoration:underline;}
+				hr { height: 1px; width: 100%;  }	
+
+				a { text-decoration:none; font-size:small; font-weight:bold; color:#2665cc; }
+			</style>
+</head>
+<body><div id="frame">
+<div id="logo"><img src="data:image/gif;base64,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"></div>
+<div id="headline">
+<h1>I/O table for ALL (Beckhoff TwinCAT 2)</h1>
+<ul id="header">
+<li>Generated using <i>industrialPhysics</i>
+</li>
+<li>Version: <i>2.0.6111.master</i> (build: <i>eba55d6</i>; <i>Windows 64 Bit</i>)</li>
+<li>Date: <i>周三 1月 4 2017</i>
+</li>
+<li>Time: <i>18:04:18</i>
+</li>
+</ul>
+<ul id="header">
+<li>HIL Server</li>
+<li>ip-address: <i>127.0.0.1</i>
+</li>
+<li>port: <i>6000</i>
+</li>
+</ul>
+</div>
+<div id="options">
+<h2>Options</h2>
+<table><thead>
+<th>Option</th>
+<th>Value</th>
+</thead></table>
+</div>
+<div id="table">
+<h2>I/O connections</h2>
+<table>
+<thead>
+<th>Component</th>
+<th>Function</th>
+<th>Nr.</th>
+<th>Signal</th>
+<th>Type</th>
+<th>Direction</th>
+</thead>
+<tr id="sep">
+<td><a href="Physics://physics/CGK/InitializePallet/Source">Source</a></td>
+<td>ModelScript</td>
+<td id="int">1</td>
+<td id="int"><a href="Physics://physics/CGK/InitializePallet/Source?IN_ISSHOW"><div id="symbol">Source01_IN_ISSHOW</div>
+<div id="path">Physics://physics/CGK/InitializePallet/Source?IN_ISSHOW</div></a></td>
+<td id="int">UINT16</td>
+<td id="int">OUT</td>
+</tr>
+<tr id="int">
+<td></td>
+<td></td>
+<td id="int">2</td>
+<td id="int"><a href="Physics://physics/CGK/InitializePallet/Source?IN_LOCATION"><div id="symbol">Source01_IN_LOCATION</div>
+<div id="path">Physics://physics/CGK/InitializePallet/Source?IN_LOCATION</div></a></td>
+<td id="int">UINT16</td>
+<td id="int">OUT</td>
+</tr>
+</table>
+</div>
+<br><br><br>
+</div></body>
+</

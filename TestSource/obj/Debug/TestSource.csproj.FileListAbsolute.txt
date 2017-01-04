@@ -1,0 +1,13 @@
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\obj\Debug\TestSource.csprojResolveAssemblyReference.cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\obj\Debug\TestSource.Form1.resources
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\obj\Debug\TestSource.Properties.Resources.resources
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\obj\Debug\TestSource.csproj.GenerateResource.Cache
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\TestSource.exe.config
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\TestSource.exe
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\TestSource.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\IPhysics.dll
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\IPhysicsSocketInterface.dll
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\IPhysicsSocketInterface.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\bin\Debug\IPhysics.pdb
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\obj\Debug\TestSource.exe
+D:\WORK\SIMPLAN\c#WORK\20161221XG\OCS1227\TestSource\obj\Debug\TestSource.pdb

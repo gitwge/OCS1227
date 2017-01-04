@@ -1,0 +1,10 @@
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '\/MNG_TCPIP' *)
+TYPE MNG_RawDatagram :(* binary TCP/IP datagram (4 byte aligned) *)
+STRUCT
+	Header	:  MNG_DatagramHeader;(* datagram header *)
+	Payload	:  MNG_DataARRAY;
+END_STRUCT
+END_TYPE
+
+(* @END_DECLARATION := '0' *)

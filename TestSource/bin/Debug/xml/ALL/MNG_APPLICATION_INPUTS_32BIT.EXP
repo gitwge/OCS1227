@@ -1,0 +1,24 @@
+(*                                                                            *)
+(* File generated using the                                                   *)
+(*     Provider: machineering                                                 *)
+(*  Application: industrialPhysics                                            *)
+(* Architecture: Windows 64 Bit                                               *)
+(*      Version: 2.0.6111.master                                              *)
+(*        Build: eba55d6                                                      *)
+(* Beckhoff TwinCAT 2 control config generator                                *)
+(*                                                                            *)
+(* Date: 周三 1月 4 2017, Time: 18:04:18                                         *)
+(*                                                                            *)
+
+(* @NESTEDCOMMENTS := 'Yes'                                                   *)
+(* @PATH := '\/MNG_TCPIP'                                                     *)
+(*                                                                            *)
+
+TYPE MNG_APPLICATION_INPUTS_32BIT :
+STRUCT
+    NumSignals                    : INT     := 0         ;
+END_STRUCT
+END_TYPE
+
+
+(* @END_DECLARATION := '0'                                                 
