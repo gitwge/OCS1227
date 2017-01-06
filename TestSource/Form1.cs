@@ -148,6 +148,7 @@ namespace TestSource
         //20170104 wge -------------------------------------------------
         public void setSource()
         {
+            
             string str = "";
             updateValue("Source01_IN_ISSHOW", "1", 1, 1);
             for (int i = 0; i < 2000;i++ )
@@ -161,7 +162,10 @@ namespace TestSource
                 
                 Thread.Sleep(400);
             }
-            MessageBox.Show(str);
+
+             
+            
+            
         }
 
       
